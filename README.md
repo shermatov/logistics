@@ -1,32 +1,38 @@
-# React + TypeScript + Vite
+# Logistics Management School
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Interactive learning and management system for Wildberries logistics, built
+around a fictional company ("Upsell") that ships goods from Kyrgyzstan into
+Russia and sells through FBS/FBW on Wildberries.
 
-Currently, two official plugins are available:
+Live: https://logistics-six-tau.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What's inside
 
-## React Compiler
+- 21 modules covering fundamentals, FBS vs FBW, economics, packaging,
+  warehousing, inventory, distribution, localization, returns, transportation,
+  cross-border cargo (Kyrgyzstan → Russia), decision engines, alerts,
+  analytics scenarios, crisis management, and strategy — each with concept
+  explanations, interactive calculators, cases, quizzes, and manager
+  questions.
+- A director's dashboard, a "Manager Mode" scenario trainer, and a first-pass
+  30-day capstone simulation.
+- A shared calculation engine (`src/lib/formulas.ts`) and a separate,
+  clearly-dated tariff configuration layer (`src/data/tariffs.ts`) — tariff
+  numbers are illustrative training values, not live Wildberries rates.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the Oxlint configuration
+React + TypeScript + Vite + Tailwind v4, client-side only (no backend).
+Progress is stored in the browser's `localStorage`.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Development
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # typecheck + production build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Deployment
+
+Deployed on Vercel, auto-deploying from `main` on every push.
