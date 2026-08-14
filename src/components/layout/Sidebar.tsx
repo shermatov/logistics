@@ -96,6 +96,7 @@ export function Sidebar({ onNavigate, onClose }: { onNavigate?: () => void; onCl
         <NavItem to="/dashboard" label="Дашборд руководителя" icon={topNavIcons.dashboard} accent="var(--series-3)" onNavigate={onNavigate} />
         <NavItem to="/manager-mode" label="Manager Mode" icon={topNavIcons.manager} accent="var(--series-2)" onNavigate={onNavigate} />
         <NavItem to="/capstone" label="Capstone: 30 дней" icon={topNavIcons.capstone} accent="var(--series-4)" onNavigate={onNavigate} />
+        <NavItem to="/roadmap" label="Данные и Roadmap" icon={topNavIcons.roadmap} accent="var(--series-7)" onNavigate={onNavigate} />
       </nav>
 
       {groups.map((group) => {

@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   UserCog,
   Trophy,
+  Milestone,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,4 +29,5 @@ export const topNavIcons = {
   dashboard: LayoutDashboard,
   manager: UserCog,
   capstone: Trophy,
+  roadmap: Milestone,
 };

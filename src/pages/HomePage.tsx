@@ -50,6 +50,9 @@ export function HomePage() {
             Цель — не запомнить термины, а научиться управлять всей системой: от поставщика в Кыргызстане до клиента
             на Wildberries и обратно. Каждый модуль объясняет тему на 4 уровнях: What → How → Why → Decision.
           </p>
+          <Link to="/roadmap" className="inline-block text-xs font-semibold underline mt-3" style={{ color: "var(--series-1)" }}>
+            Все данные в проекте учебные — откуда они и что дальше →
+          </Link>
         </div>
       </div>
 

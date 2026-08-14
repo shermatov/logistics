@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { LayoutDashboard, AlertTriangle } from "lucide-react";
 import { Card, CardTitle } from "../components/ui/Card";
@@ -141,7 +142,10 @@ export function DashboardPage() {
           </div>
         </div>
         <p className="relative text-sm mt-3" style={{ color: "var(--text-secondary)" }}>
-          Данные за последние 30 дней. Компания и цифры — учебный пример, не реальные показатели.
+          Данные за последние 30 дней. Компания и цифры — учебный пример, не реальные показатели.{" "}
+          <Link to="/roadmap" className="underline" style={{ color: "var(--series-3)" }}>
+            Откуда данные и что дальше →
+          </Link>
         </p>
       </div>
 

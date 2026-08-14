@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Trophy, RotateCcw } from "lucide-react";
 import { Card, CardTitle } from "../components/ui/Card";
 import { SectionHeading, Pill } from "../components/ui/Misc";
@@ -201,6 +202,9 @@ export function CapstonePage() {
           реальными формулами reorder point / fully landed cost, сравнение с оптимальной стратегией day-by-day) —
           следующий шаг развития этого модуля.
         </p>
+        <Link to="/roadmap" className="inline-block text-sm underline mt-2" style={{ color: "var(--series-3)" }}>
+          Полный roadmap проекта →
+        </Link>
       </Card>
     </div>
   );

@@ -5,6 +5,7 @@ import { HomePage } from "./pages/HomePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ManagerModePage } from "./pages/ManagerModePage";
 import { CapstonePage } from "./pages/CapstonePage";
+import { RoadmapPage } from "./pages/RoadmapPage";
 import { M01Fundamentals } from "./modules/M01Fundamentals";
 import { M02Wildberries } from "./modules/M02Wildberries";
 import { M03FbsFbw } from "./modules/M03FbsFbw";
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/manager-mode" element={<ManagerModePage />} />
             <Route path="/capstone" element={<CapstonePage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
             <Route path="/modules/m01" element={<M01Fundamentals />} />
             <Route path="/modules/m02" element={<M02Wildberries />} />
             <Route path="/modules/m03" element={<M03FbsFbw />} />
