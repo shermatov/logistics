@@ -1,15 +1,30 @@
 import { NavLink } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, X } from "lucide-react";
 import { groups, moduleMeta } from "../../data/moduleMeta";
 import { groupStyle, topNavIcons } from "../../data/groupIcons";
 import { useProgress } from "../../state/progress";
 
-function NavItem({ to, label, icon: Icon, done, accent }: { to: string; label: string; icon?: LucideIcon; done?: boolean; accent?: string }) {
+function NavItem({
+  to,
+  label,
+  icon: Icon,
+  done,
+  accent,
+  onNavigate,
+}: {
+  to: string;
+  label: string;
+  icon?: LucideIcon;
+  done?: boolean;
+  accent?: string;
+  onNavigate?: () => void;
+}) {
   return (
     <NavLink
       to={to}
       end={to === "/"}
+      onClick={onNavigate}
       className="group flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all duration-150"
       style={({ isActive }) => ({
         background: isActive ? "var(--surface-2)" : "transparent",
@@ -43,14 +58,11 @@ function NavItem({ to, label, icon: Icon, done, accent }: { to: string; label: s
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ onNavigate, onClose }: { onNavigate?: () => void; onClose?: () => void }) {
   const { completedModules } = useProgress();
 
   return (
-    <aside
-      className="w-64 shrink-0 h-full overflow-y-auto border-r px-3 py-4 flex flex-col gap-5"
-      style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}
-    >
+    <div className="h-full w-64 overflow-y-auto px-3 py-4 flex flex-col gap-5" style={{ background: "var(--surface-1)" }}>
       <div className="flex items-center gap-2.5 px-2 pb-1">
         <div
           className="w-9 h-9 rounded-xl shrink-0 grid place-items-center text-white font-bold text-sm shadow-sm"
@@ -58,7 +70,7 @@ export function Sidebar() {
         >
           L
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-sm font-bold truncate" style={{ color: "var(--text-primary)" }}>
             Logistics School
           </div>
@@ -66,13 +78,24 @@ export function Sidebar() {
             Wildberries · Upsell
           </div>
         </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="md:hidden shrink-0 w-8 h-8 rounded-lg grid place-items-center"
+            style={{ color: "var(--text-muted)", background: "var(--surface-2)" }}
+            aria-label="Закрыть меню"
+          >
+            <X size={16} strokeWidth={2.4} />
+          </button>
+        )}
       </div>
 
       <nav className="flex flex-col gap-0.5">
-        <NavItem to="/" label="Карта компетенций" icon={topNavIcons.home} accent="var(--series-1)" />
-        <NavItem to="/dashboard" label="Дашборд руководителя" icon={topNavIcons.dashboard} accent="var(--series-3)" />
-        <NavItem to="/manager-mode" label="Manager Mode" icon={topNavIcons.manager} accent="var(--series-2)" />
-        <NavItem to="/capstone" label="Capstone: 30 дней" icon={topNavIcons.capstone} accent="var(--series-4)" />
+        <NavItem to="/" label="Карта компетенций" icon={topNavIcons.home} accent="var(--series-1)" onNavigate={onNavigate} />
+        <NavItem to="/dashboard" label="Дашборд руководителя" icon={topNavIcons.dashboard} accent="var(--series-3)" onNavigate={onNavigate} />
+        <NavItem to="/manager-mode" label="Manager Mode" icon={topNavIcons.manager} accent="var(--series-2)" onNavigate={onNavigate} />
+        <NavItem to="/capstone" label="Capstone: 30 дней" icon={topNavIcons.capstone} accent="var(--series-4)" onNavigate={onNavigate} />
       </nav>
 
       {groups.map((group) => {
@@ -94,11 +117,12 @@ export function Sidebar() {
                 label={`${m.number}. ${m.shortTitle}`}
                 done={!!completedModules[m.id]}
                 accent={style?.color}
+                onNavigate={onNavigate}
               />
             ))}
           </div>
         );
       })}
-    </aside>
+    </div>
   );
 }
