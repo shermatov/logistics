@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Card, CardTitle } from "../ui/Card";
+import { CheckCircle2, XCircle, Trophy, RotateCcw, HelpCircle } from "lucide-react";
+import { Card } from "../ui/Card";
 import clsx from "clsx";
 
 export interface QuizQuestion {
@@ -22,6 +23,7 @@ export function QuizBlock({
   const [submitted, setSubmitted] = useState(false);
 
   const score = answers.reduce<number>((acc, a, i) => acc + (a === questions[i].correctIndex ? 1 : 0), 0);
+  const allCorrect = submitted && score === questions.length;
 
   function submit() {
     setSubmitted(true);
@@ -30,9 +32,17 @@ export function QuizBlock({
 
   return (
     <Card>
-      <CardTitle>
-        {title} ({questions.length} вопросов)
-      </CardTitle>
+      <div className="flex items-center gap-2 mb-3">
+        <span
+          className="w-7 h-7 rounded-lg grid place-items-center shrink-0"
+          style={{ background: "color-mix(in srgb, var(--series-4) 16%, transparent)", color: "var(--series-4)" }}
+        >
+          <HelpCircle size={14} strokeWidth={2.4} />
+        </span>
+        <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+          {title} ({questions.length} вопросов)
+        </h3>
+      </div>
       <div className="flex flex-col gap-5">
         {questions.map((q, qi) => (
           <div key={qi}>
@@ -57,8 +67,8 @@ export function QuizBlock({
                       })
                     }
                     className={clsx(
-                      "text-left text-sm rounded-lg border px-3 py-2 transition-colors",
-                      !submitted && "cursor-pointer hover:opacity-80"
+                      "flex items-center justify-between gap-2 text-left text-sm rounded-xl border px-3.5 py-2.5 transition-all duration-150",
+                      !submitted && "cursor-pointer hover:border-[var(--series-1)]"
                     )}
                     style={{
                       borderColor: isCorrect
@@ -68,17 +78,28 @@ export function QuizBlock({
                         : isSelected
                         ? "var(--series-1)"
                         : "var(--border)",
-                      background: isSelected && !submitted ? "var(--surface-2)" : "transparent",
+                      background: isCorrect
+                        ? "color-mix(in srgb, var(--status-good) 10%, transparent)"
+                        : isWrongSelected
+                        ? "color-mix(in srgb, var(--status-critical) 10%, transparent)"
+                        : isSelected && !submitted
+                        ? "var(--surface-2)"
+                        : "transparent",
                       color: "var(--text-primary)",
                     }}
                   >
                     {opt}
+                    {isCorrect && <CheckCircle2 size={16} strokeWidth={2.4} style={{ color: "var(--status-good)" }} className="shrink-0" />}
+                    {isWrongSelected && <XCircle size={16} strokeWidth={2.4} style={{ color: "var(--status-critical)" }} className="shrink-0" />}
                   </button>
                 );
               })}
             </div>
             {submitted && (
-              <div className="text-xs mt-2 rounded-md px-3 py-2" style={{ background: "var(--surface-2)", color: "var(--text-secondary)" }}>
+              <div
+                className="text-xs mt-2 rounded-lg px-3 py-2 border"
+                style={{ background: "var(--surface-2)", borderColor: "var(--border)", color: "var(--text-secondary)" }}
+              >
                 {q.explanation}
               </div>
             )}
@@ -91,14 +112,21 @@ export function QuizBlock({
             type="button"
             onClick={submit}
             disabled={answers.some((a) => a === null)}
-            className="text-sm font-medium rounded-lg px-4 py-2 disabled:opacity-40"
-            style={{ background: "var(--series-1)", color: "white" }}
+            className="text-sm font-semibold rounded-[var(--radius-pill)] px-5 py-2.5 disabled:opacity-40 transition-transform duration-150 hover:-translate-y-0.5"
+            style={{ background: "var(--gradient-brand)", color: "white", boxShadow: "var(--shadow-sm)" }}
           >
             Проверить ответы
           </button>
         ) : (
           <>
-            <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+            <span
+              className={clsx("pop-in inline-flex items-center gap-1.5 text-sm font-bold px-3 py-1.5 rounded-full")}
+              style={{
+                color: allCorrect ? "var(--status-good)" : "var(--text-primary)",
+                background: allCorrect ? "color-mix(in srgb, var(--status-good) 14%, transparent)" : "var(--surface-2)",
+              }}
+            >
+              {allCorrect && <Trophy size={14} strokeWidth={2.4} />}
               Результат: {score} / {questions.length}
             </span>
             <button
@@ -107,9 +135,10 @@ export function QuizBlock({
                 setSubmitted(false);
                 setAnswers(Array(questions.length).fill(null));
               }}
-              className="text-sm rounded-lg px-3 py-1.5 border"
+              className="inline-flex items-center gap-1.5 text-sm font-medium rounded-[var(--radius-pill)] px-3.5 py-1.5 border transition-colors"
               style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
             >
+              <RotateCcw size={13} strokeWidth={2.4} />
               Пройти ещё раз
             </button>
           </>

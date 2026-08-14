@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LayoutDashboard, AlertTriangle } from "lucide-react";
 import { Card, CardTitle } from "../components/ui/Card";
 import { KpiTile } from "../components/ui/KpiTile";
 import { SectionHeading, StatusDot } from "../components/ui/Misc";
@@ -118,14 +119,28 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl">
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--series-1)" }}>
-          Дашборд руководителя
+      <div
+        className="relative overflow-hidden rounded-[var(--radius-lg)] border px-6 py-7"
+        style={{ borderColor: "var(--border)", background: "var(--surface-1)", boxShadow: "var(--shadow-sm)" }}
+      >
+        <div className="pointer-events-none absolute inset-0" style={{ background: "var(--gradient-hero)" }} aria-hidden />
+        <div className="relative flex items-center gap-3">
+          <span
+            className="w-11 h-11 rounded-2xl grid place-items-center shrink-0"
+            style={{ background: "var(--gradient-fresh)", boxShadow: "var(--shadow-sm)", color: "white" }}
+          >
+            <LayoutDashboard size={20} strokeWidth={2.2} />
+          </span>
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--series-3)" }}>
+              Дашборд руководителя
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              Upsell — Logistics Control Center
+            </h1>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-          Upsell — Logistics Control Center
-        </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+        <p className="relative text-sm mt-3" style={{ color: "var(--text-secondary)" }}>
           Данные за последние 30 дней. Компания и цифры — учебный пример, не реальные показатели.
         </p>
       </div>
@@ -135,10 +150,16 @@ export function DashboardPage() {
           <SectionHeading eyebrow="Alerts" title="Активные предупреждения" />
           <div className="flex flex-col gap-2">
             {alerts.map((a, i) => (
-              <Card key={i}>
+              <Card key={i} className="relative overflow-hidden">
+                <span
+                  className="absolute left-0 top-0 bottom-0 w-1"
+                  style={{ background: a.level === "critical" ? "var(--status-critical)" : "var(--status-warning)" }}
+                  aria-hidden
+                />
                 <div className="flex items-start gap-3">
-                  <div className="mt-1">
+                  <div className="mt-0.5 flex items-center gap-1.5">
                     <StatusDot status={a.level === "critical" ? "critical" : "warning"} />
+                    <AlertTriangle size={14} strokeWidth={2.4} style={{ color: a.level === "critical" ? "var(--status-critical)" : "var(--status-warning)" }} />
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>

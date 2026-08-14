@@ -1,15 +1,31 @@
 import { useState, type ReactNode } from "react";
-import { Card, CardTitle } from "../ui/Card";
+import { MessageCircleQuestion, Rocket, Lightbulb, ClipboardList, Waypoints, ArrowDown, Eye } from "lucide-react";
+import { Card } from "../ui/Card";
 import { Pill } from "../ui/Misc";
+
+function BlockHeading({ icon: Icon, color, children }: { icon: typeof MessageCircleQuestion; color: string; children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span
+        className="w-7 h-7 rounded-lg grid place-items-center shrink-0"
+        style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}
+      >
+        <Icon size={14} strokeWidth={2.4} />
+      </span>
+      {children}
+    </div>
+  );
+}
 
 export function ManagerQuestionBlock({ scenario, question, seniorAnswer }: { scenario: ReactNode; question: string; seniorAnswer: ReactNode }) {
   const [answer, setAnswer] = useState("");
   const [revealed, setRevealed] = useState(false);
   return (
-    <Card>
-      <div className="flex items-center gap-2 mb-3">
+    <Card className="relative overflow-hidden">
+      <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--gradient-warm)" }} aria-hidden />
+      <BlockHeading icon={MessageCircleQuestion} color="var(--series-2)">
         <Pill tone="orange">Manager Question</Pill>
-      </div>
+      </BlockHeading>
       <div className="text-sm mb-3 leading-relaxed" style={{ color: "var(--text-primary)" }}>
         {scenario}
       </div>
@@ -17,7 +33,7 @@ export function ManagerQuestionBlock({ scenario, question, seniorAnswer }: { sce
         {question}
       </div>
       <textarea
-        className="w-full rounded-lg border px-3 py-2 text-sm min-h-24 outline-none"
+        className="w-full rounded-xl border px-3 py-2 text-sm min-h-24 outline-none transition-shadow"
         style={{ background: "var(--surface-2)", borderColor: "var(--border)", color: "var(--text-primary)" }}
         placeholder="Опишите своё решение..."
         value={answer}
@@ -27,14 +43,18 @@ export function ManagerQuestionBlock({ scenario, question, seniorAnswer }: { sce
         <button
           type="button"
           onClick={() => setRevealed(true)}
-          className="text-sm font-medium rounded-lg px-4 py-2"
-          style={{ background: "var(--series-2)", color: "white" }}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold rounded-[var(--radius-pill)] px-4 py-2 transition-transform duration-150 hover:-translate-y-0.5"
+          style={{ background: "var(--gradient-warm)", color: "white", boxShadow: "var(--shadow-sm)" }}
         >
+          <Eye size={14} strokeWidth={2.4} />
           Показать решение senior-руководителя
         </button>
       </div>
       {revealed && (
-        <div className="mt-4 rounded-lg border p-4 text-sm leading-relaxed" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-secondary)" }}>
+        <div
+          className="pop-in mt-4 rounded-xl border p-4 text-sm leading-relaxed"
+          style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-secondary)" }}
+        >
           {seniorAnswer}
         </div>
       )}
@@ -45,10 +65,11 @@ export function ManagerQuestionBlock({ scenario, question, seniorAnswer }: { sce
 export function ChallengeBlock({ task, hint }: { task: ReactNode; hint?: ReactNode }) {
   const [showHint, setShowHint] = useState(false);
   return (
-    <Card>
-      <div className="flex items-center gap-2 mb-3">
+    <Card className="relative overflow-hidden">
+      <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--gradient-fresh)" }} aria-hidden />
+      <BlockHeading icon={Rocket} color="var(--series-3)">
         <Pill tone="green">Challenge</Pill>
-      </div>
+      </BlockHeading>
       <div className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
         {task}
       </div>
@@ -58,13 +79,14 @@ export function ChallengeBlock({ task, hint }: { task: ReactNode; hint?: ReactNo
             <button
               type="button"
               onClick={() => setShowHint(true)}
-              className="text-xs font-medium underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold"
               style={{ color: "var(--series-1)" }}
             >
+              <Lightbulb size={13} strokeWidth={2.4} />
               Показать подсказку
             </button>
           ) : (
-            <div className="text-xs mt-1 rounded-md px-3 py-2" style={{ background: "var(--surface-2)", color: "var(--text-secondary)" }}>
+            <div className="pop-in text-xs mt-1 rounded-lg px-3 py-2 border" style={{ background: "var(--surface-2)", borderColor: "var(--border)", color: "var(--text-secondary)" }}>
               {hint}
             </div>
           )}
@@ -98,12 +120,15 @@ const CASE_LABELS: { key: keyof DecisionCaseFields; label: string }[] = [
 
 export function DecisionCaseBlock({ title, fields }: { title: string; fields: DecisionCaseFields }) {
   return (
-    <Card>
-      <CardTitle>{title}</CardTitle>
+    <Card className="relative overflow-hidden">
+      <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--gradient-brand)" }} aria-hidden />
+      <BlockHeading icon={ClipboardList} color="var(--series-7)">
+        <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{title}</h3>
+      </BlockHeading>
       <div className="flex flex-col gap-3">
         {CASE_LABELS.map(({ key, label }) => (
           <div key={key}>
-            <div className="text-xs font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
+            <div className="text-xs font-bold uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
               {label}
             </div>
             <div className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
@@ -118,19 +143,20 @@ export function DecisionCaseBlock({ title, fields }: { title: string; fields: De
 
 export function WhyChain({ steps }: { steps: string[] }) {
   return (
-    <Card>
-      <div className="flex items-center gap-2 mb-3">
+    <Card className="relative overflow-hidden">
+      <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--series-1)" }} aria-hidden />
+      <BlockHeading icon={Waypoints} color="var(--series-1)">
         <Pill tone="blue">Why-chain</Pill>
-      </div>
+      </BlockHeading>
       <div className="flex flex-col">
         {steps.map((s, i) => (
           <div key={i}>
-            <div className="text-sm py-1" style={{ color: "var(--text-primary)" }}>
+            <div className="text-sm py-1.5 px-3 rounded-lg" style={{ color: "var(--text-primary)", background: i % 2 === 0 ? "var(--surface-2)" : "transparent" }}>
               {s}
             </div>
             {i < steps.length - 1 && (
-              <div className="pl-2 text-xs" style={{ color: "var(--text-muted)" }}>
-                ↓
+              <div className="flex justify-start pl-3 py-0.5" aria-hidden style={{ color: "var(--series-1)" }}>
+                <ArrowDown size={13} strokeWidth={2.4} />
               </div>
             )}
           </div>

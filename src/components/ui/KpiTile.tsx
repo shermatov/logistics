@@ -30,18 +30,24 @@ export function KpiTile({
   status?: Status;
   icon?: ReactNode;
 }) {
+  const accent = status ? statusVar[status] : "var(--series-1)";
   return (
     <div
-      className="rounded-xl border p-4 flex flex-col gap-1 min-w-0"
-      style={{ background: "var(--surface-1)", borderColor: "var(--border)" }}
+      className="relative rounded-[var(--radius-md)] border p-4 flex flex-col gap-1 min-w-0 overflow-hidden transition-shadow duration-200"
+      style={{ background: "var(--surface-1)", borderColor: "var(--border)", boxShadow: "var(--shadow-xs)" }}
     >
+      <div
+        className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: status ? accent : "transparent" }}
+        aria-hidden
+      />
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wide truncate" style={{ color: "var(--text-muted)" }}>
+        <span className="text-xs font-semibold uppercase tracking-wide truncate" style={{ color: "var(--text-muted)" }}>
           {label}
         </span>
         {icon}
       </div>
-      <div className="text-2xl font-semibold tabular truncate" style={{ color: "var(--text-primary)" }}>
+      <div className="text-2xl font-bold tabular truncate" style={{ color: "var(--text-primary)" }}>
         {value}
       </div>
       {sub && (
@@ -50,12 +56,12 @@ export function KpiTile({
         </div>
       )}
       {status && (
-        <div className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium w-fit">
-          <span
-            className={clsx("inline-block w-2 h-2 rounded-full")}
-            style={{ background: statusVar[status] }}
-          />
-          <span style={{ color: "var(--text-secondary)" }}>{statusLabel[status]}</span>
+        <div
+          className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold w-fit px-1.5 py-0.5 rounded-full"
+          style={{ background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
+        >
+          <span className={clsx("inline-block w-1.5 h-1.5 rounded-full")} style={{ background: accent }} />
+          {statusLabel[status]}
         </div>
       )}
     </div>

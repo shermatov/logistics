@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trophy, RotateCcw } from "lucide-react";
 import { Card, CardTitle } from "../components/ui/Card";
 import { SectionHeading, Pill } from "../components/ui/Misc";
 import { KpiTile } from "../components/ui/KpiTile";
@@ -99,14 +100,28 @@ export function CapstonePage() {
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl">
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--series-3)" }}>
-          Capstone
+      <div
+        className="relative overflow-hidden rounded-[var(--radius-lg)] border px-6 py-7"
+        style={{ borderColor: "var(--border)", background: "var(--surface-1)", boxShadow: "var(--shadow-sm)" }}
+      >
+        <div className="pointer-events-none absolute inset-0" style={{ background: "var(--gradient-hero)" }} aria-hidden />
+        <div className="relative flex items-center gap-3">
+          <span
+            className="w-11 h-11 rounded-2xl grid place-items-center shrink-0"
+            style={{ background: "linear-gradient(135deg, var(--series-4), var(--series-2))", boxShadow: "var(--shadow-sm)", color: "white" }}
+          >
+            <Trophy size={20} strokeWidth={2.2} />
+          </span>
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--series-4)" }}>
+              Capstone
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              Upsell — управление логистикой 30 дней
+            </h1>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-          Upsell — управление логистикой 30 дней
-        </h1>
-        <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>
+        <p className="relative text-sm mt-3 max-w-2xl" style={{ color: "var(--text-secondary)" }}>
           Вымышленная компания Upsell: {skus.length} SKU, {warehouses.length} склада (Кыргызстан + Россия), FBS и
           FBW, разные категории и return rate. В течение месяца возникают события — принимайте решения, как
           руководитель логистики, и смотрите на совокупный эффект в конце.
@@ -136,8 +151,8 @@ export function CapstonePage() {
                 <button
                   key={opt.label}
                   onClick={() => choose(opt)}
-                  className="text-left text-sm rounded-lg border px-4 py-3 hover:opacity-80"
-                  style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-primary)" }}
+                  className="text-left text-sm rounded-xl border px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:border-[var(--series-4)]"
+                  style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-primary)", boxShadow: "var(--shadow-xs)" }}
                 >
                   {opt.label}
                 </button>
@@ -168,9 +183,10 @@ export function CapstonePage() {
             </Card>
             <button
               onClick={restart}
-              className="mt-4 text-sm font-medium rounded-lg px-4 py-2 w-fit"
-              style={{ background: "var(--series-1)", color: "white" }}
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold rounded-[var(--radius-pill)] px-5 py-2.5 w-fit transition-transform duration-150 hover:-translate-y-0.5"
+              style={{ background: "var(--gradient-brand)", color: "white", boxShadow: "var(--shadow-sm)" }}
             >
+              <RotateCcw size={14} strokeWidth={2.4} />
               Пройти заново
             </button>
           </>

@@ -1,26 +1,43 @@
 import { NavLink } from "react-router-dom";
+import type { LucideIcon } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { groups, moduleMeta } from "../../data/moduleMeta";
+import { groupStyle, topNavIcons } from "../../data/groupIcons";
 import { useProgress } from "../../state/progress";
 
-function NavItem({ to, label, badge }: { to: string; label: string; badge?: string }) {
+function NavItem({ to, label, icon: Icon, done, accent }: { to: string; label: string; icon?: LucideIcon; done?: boolean; accent?: string }) {
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        `flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-          isActive ? "font-semibold" : ""
-        }`
-      }
+      end={to === "/"}
+      className="group flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all duration-150"
       style={({ isActive }) => ({
         background: isActive ? "var(--surface-2)" : "transparent",
         color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+        fontWeight: isActive ? 600 : 500,
+        boxShadow: isActive ? "var(--shadow-xs)" : "none",
       })}
     >
-      <span className="truncate">{label}</span>
-      {badge && (
-        <span className="text-xs" style={{ color: "var(--status-good)" }}>
-          {badge}
-        </span>
+      {({ isActive }) => (
+        <>
+          {Icon && (
+            <span
+              className="shrink-0 grid place-items-center w-6 h-6 rounded-lg transition-transform duration-150 group-hover:scale-105"
+              style={{
+                color: isActive ? (accent ?? "var(--series-1)") : "var(--text-muted)",
+                background: isActive ? `color-mix(in srgb, ${accent ?? "var(--series-1)"} 14%, transparent)` : "transparent",
+              }}
+            >
+              <Icon size={15} strokeWidth={2.2} />
+            </span>
+          )}
+          <span className="truncate flex-1">{label}</span>
+          {done && (
+            <span style={{ color: "var(--status-good)" }}>
+              <CheckCircle2 size={14} strokeWidth={2.4} />
+            </span>
+          )}
+        </>
       )}
     </NavLink>
   );
@@ -34,36 +51,49 @@ export function Sidebar() {
       className="w-64 shrink-0 h-full overflow-y-auto border-r px-3 py-4 flex flex-col gap-5"
       style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}
     >
-      <div className="px-2">
-        <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
-          Logistics School
+      <div className="flex items-center gap-2.5 px-2 pb-1">
+        <div
+          className="w-9 h-9 rounded-xl shrink-0 grid place-items-center text-white font-bold text-sm shadow-sm"
+          style={{ background: "var(--gradient-brand)", boxShadow: "var(--shadow-sm)" }}
+        >
+          L
         </div>
-        <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-          Wildberries · Upsell
+        <div className="min-w-0">
+          <div className="text-sm font-bold truncate" style={{ color: "var(--text-primary)" }}>
+            Logistics School
+          </div>
+          <div className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+            Wildberries · Upsell
+          </div>
         </div>
       </div>
 
       <nav className="flex flex-col gap-0.5">
-        <NavItem to="/" label="Карта компетенций" />
-        <NavItem to="/dashboard" label="Дашборд руководителя" />
-        <NavItem to="/manager-mode" label="Manager Mode" />
-        <NavItem to="/capstone" label="Capstone: 30 дней" />
+        <NavItem to="/" label="Карта компетенций" icon={topNavIcons.home} accent="var(--series-1)" />
+        <NavItem to="/dashboard" label="Дашборд руководителя" icon={topNavIcons.dashboard} accent="var(--series-3)" />
+        <NavItem to="/manager-mode" label="Manager Mode" icon={topNavIcons.manager} accent="var(--series-2)" />
+        <NavItem to="/capstone" label="Capstone: 30 дней" icon={topNavIcons.capstone} accent="var(--series-4)" />
       </nav>
 
       {groups.map((group) => {
         const items = moduleMeta.filter((m) => m.group === group);
         if (items.length === 0) return null;
+        const style = groupStyle[group];
         return (
           <div key={group} className="flex flex-col gap-0.5">
-            <div className="px-3 text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--text-muted)" }}>
-              {group}
+            <div className="flex items-center gap-1.5 px-3 mb-1">
+              {style && <style.icon size={12} strokeWidth={2.4} style={{ color: style.color }} />}
+              <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                {group}
+              </div>
             </div>
             {items.map((m) => (
               <NavItem
                 key={m.id}
                 to={m.path}
                 label={`${m.number}. ${m.shortTitle}`}
-                badge={completedModules[m.id] ? "✓" : undefined}
+                done={!!completedModules[m.id]}
+                accent={style?.color}
               />
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UserCog, CheckCircle2 } from "lucide-react";
 import { Card, CardTitle } from "../components/ui/Card";
 import { Pill } from "../components/ui/Misc";
 import { useProgress } from "../state/progress";
@@ -66,14 +67,28 @@ export function ManagerModePage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl">
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--series-2)" }}>
-          Manager Mode
+      <div
+        className="relative overflow-hidden rounded-[var(--radius-lg)] border px-6 py-7"
+        style={{ borderColor: "var(--border)", background: "var(--surface-1)", boxShadow: "var(--shadow-sm)" }}
+      >
+        <div className="pointer-events-none absolute inset-0" style={{ background: "var(--gradient-hero)" }} aria-hidden />
+        <div className="relative flex items-center gap-3">
+          <span
+            className="w-11 h-11 rounded-2xl grid place-items-center shrink-0"
+            style={{ background: "var(--gradient-warm)", boxShadow: "var(--shadow-sm)", color: "white" }}
+          >
+            <UserCog size={20} strokeWidth={2.2} />
+          </span>
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--series-2)" }}>
+              Manager Mode
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              Реальный режим руководителя
+            </h1>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-          Реальный режим руководителя
-        </h1>
-        <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>
+        <p className="relative text-sm mt-3 max-w-2xl" style={{ color: "var(--text-secondary)" }}>
           Здесь вы не читаете теорию, а сразу получаете ситуацию и отвечаете на вопрос «What would you do?». После
           ответа — сравнение с сильными сторонами хорошего решения и вариантом senior-руководителя.
         </p>
@@ -84,11 +99,12 @@ export function ManagerModePage() {
           <button
             key={s.id}
             onClick={() => selectScenario(s)}
-            className="text-sm rounded-lg px-3 py-1.5 border"
+            className="text-sm font-medium rounded-[var(--radius-pill)] px-4 py-2 border transition-all duration-150 hover:-translate-y-0.5"
             style={{
-              background: active.id === s.id ? "var(--series-1)" : "transparent",
+              background: active.id === s.id ? "var(--gradient-warm)" : "var(--surface-1)",
               color: active.id === s.id ? "white" : "var(--text-primary)",
-              borderColor: active.id === s.id ? "var(--series-1)" : "var(--border)",
+              borderColor: active.id === s.id ? "transparent" : "var(--border)",
+              boxShadow: active.id === s.id ? "var(--shadow-sm)" : "none",
             }}
           >
             {s.title}
@@ -107,7 +123,7 @@ export function ManagerModePage() {
           {active.question}
         </div>
         <textarea
-          className="w-full rounded-lg border px-3 py-2 text-sm min-h-32 outline-none"
+          className="w-full rounded-xl border px-3 py-2 text-sm min-h-32 outline-none"
           style={{ background: "var(--surface-2)", borderColor: "var(--border)", color: "var(--text-primary)" }}
           placeholder="Опишите порядок действий..."
           value={answer}
@@ -117,8 +133,8 @@ export function ManagerModePage() {
           type="button"
           onClick={() => setRevealed(true)}
           disabled={answer.trim().length === 0}
-          className="mt-3 text-sm font-medium rounded-lg px-4 py-2 disabled:opacity-40"
-          style={{ background: "var(--series-2)", color: "white" }}
+          className="mt-3 text-sm font-semibold rounded-[var(--radius-pill)] px-5 py-2.5 disabled:opacity-40 transition-transform duration-150 hover:-translate-y-0.5"
+          style={{ background: "var(--gradient-warm)", color: "white", boxShadow: "var(--shadow-sm)" }}
         >
           Оценить решение
         </button>
@@ -153,11 +169,12 @@ export function ManagerModePage() {
                     setSelfScore(v);
                     recordDecision(v);
                   }}
-                  className="text-sm rounded-lg px-3 py-1.5 border"
+                  className="text-sm font-semibold rounded-[var(--radius-pill)] px-4 py-1.5 border transition-all duration-150 hover:-translate-y-0.5"
                   style={{
-                    background: selfScore === v ? "var(--status-good)" : "transparent",
+                    background: selfScore === v ? "var(--status-good)" : "var(--surface-2)",
                     color: selfScore === v ? "white" : "var(--text-primary)",
-                    borderColor: selfScore === v ? "var(--status-good)" : "var(--border)",
+                    borderColor: selfScore === v ? "transparent" : "var(--border)",
+                    boxShadow: selfScore === v ? "var(--shadow-sm)" : "none",
                   }}
                 >
                   {v}%
@@ -165,8 +182,10 @@ export function ManagerModePage() {
               ))}
             </div>
             {selfScore !== null && (
-              <div className="mt-3">
-                <Pill tone="green">Оценка сохранена</Pill>
+              <div className="pop-in mt-3">
+                <Pill tone="green">
+                  <CheckCircle2 size={12} strokeWidth={2.5} /> Оценка сохранена
+                </Pill>
               </div>
             )}
           </Card>
