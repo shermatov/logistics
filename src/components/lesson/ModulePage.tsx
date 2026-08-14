@@ -66,34 +66,3 @@ export function ModulePage({
     </div>
   );
 }
-
-export function StubModulePage({ moduleId, number, title, level, description, outline }: {
-  moduleId: string;
-  number: string;
-  title: string;
-  level: SkillLevel;
-  description: string;
-  outline: string[];
-}) {
-  return (
-    <ModulePage moduleId={moduleId} number={number} title={title} level={level} intro={description}>
-      <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}>
-        <div className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "var(--text-muted)" }}>
-          Структура модуля (черновик — раскрывается по мере прохождения курса)
-        </div>
-        <ul className="flex flex-col gap-2">
-          {outline.map((item, i) => (
-            <li key={i} className="text-sm flex gap-2" style={{ color: "var(--text-primary)" }}>
-              <span style={{ color: "var(--text-muted)" }}>{i + 1}.</span>
-              {item}
-            </li>
-          ))}
-        </ul>
-        <p className="text-xs mt-4" style={{ color: "var(--text-muted)" }}>
-          Скажите «раскрой модуль {number}», и мы наполним его по той же схеме: Concept → Visual → Example →
-          Calculation → Case → Decision → Quiz → Challenge → Manager Question.
-        </p>
-      </div>
-    </ModulePage>
-  );
-}

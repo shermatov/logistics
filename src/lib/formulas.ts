@@ -359,6 +359,43 @@ export function calcTruckCapacity(input: CapacityInput): CapacityResult {
   };
 }
 
+// ---------- Own warehouse economics (§12) ----------
+
+export interface OwnWarehouseCostInput {
+  rent: number;
+  labor: number;
+  packaging: number;
+  equipment: number;
+  utilities: number;
+  software: number;
+  errors: number;
+  returns: number;
+}
+
+export interface OwnWarehouseCostResult {
+  totalOperatingCost: number;
+  costPerOrder: number;
+  costPerUnit: number;
+  costPerEmployee: number;
+  ordersPerHour: number;
+  ordersPerEmployee: number;
+}
+
+export function calcOwnWarehouseCost(
+  input: OwnWarehouseCostInput,
+  volume: { orders: number; units: number; employees: number; hoursPerPeriod: number }
+): OwnWarehouseCostResult {
+  const totalOperatingCost = Object.values(input).reduce((a, b) => a + b, 0);
+  return {
+    totalOperatingCost,
+    costPerOrder: volume.orders > 0 ? totalOperatingCost / volume.orders : 0,
+    costPerUnit: volume.units > 0 ? totalOperatingCost / volume.units : 0,
+    costPerEmployee: volume.employees > 0 ? totalOperatingCost / volume.employees : 0,
+    ordersPerHour: volume.hoursPerPeriod > 0 ? volume.orders / volume.hoursPerPeriod : 0,
+    ordersPerEmployee: volume.employees > 0 ? volume.orders / volume.employees : 0,
+  };
+}
+
 // ---------- Formatting helpers ----------
 
 export function fmtRub(value: number): string {

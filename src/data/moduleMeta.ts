@@ -120,7 +120,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "Demand geography vs inventory geography и их взаимодействие.",
     level: "Manager",
     group: "Склад и запасы",
-    built: false,
+    built: true,
   },
   {
     id: "m10",
@@ -131,7 +131,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "Причины возвратов, обратная логистика, влияние на маржу. Калькулятор.",
     level: "Analyst",
     group: "Экономика",
-    built: false,
+    built: true,
   },
   {
     id: "m11",
@@ -142,7 +142,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "Операционный workflow сборки заказа и KPI склада.",
     level: "Operator",
     group: "Wildberries",
-    built: false,
+    built: true,
   },
   {
     id: "m12",
@@ -153,7 +153,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "Cost per order, cost per unit, orders per employee для собственного fulfillment.",
     level: "Manager",
     group: "Экономика",
-    built: false,
+    built: true,
   },
   {
     id: "m13",
@@ -164,7 +164,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "FTL / LTL / курьер / 3PL — когда что выгоднее.",
     level: "Manager",
     group: "Склад и запасы",
-    built: false,
+    built: true,
   },
   {
     id: "cargo",
@@ -197,7 +197,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "Автоматические предупреждения: stockout, overstock, рост возвратов.",
     level: "Manager",
     group: "Управление",
-    built: false,
+    built: true,
   },
   {
     id: "m17",
@@ -208,7 +208,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "«Что если» сценарии: рост продаж, рост возвратов, отказ склада.",
     level: "Director",
     group: "Управление",
-    built: false,
+    built: true,
   },
   {
     id: "m18",
@@ -219,7 +219,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "Что делать, когда логистика ломается: закрытие склада, задержка поставки.",
     level: "Director",
     group: "Стратегия",
-    built: false,
+    built: true,
   },
   {
     id: "m19",
@@ -230,7 +230,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "Trade-offs: централизация vs распределение, свой склад vs 3PL.",
     level: "Director",
     group: "Стратегия",
-    built: false,
+    built: true,
   },
   {
     id: "m20",
@@ -241,7 +241,7 @@ export const moduleMeta: ModuleMeta[] = [
     description: "Inputs → Process → Outputs. Главная system map всего проекта.",
     level: "Architect",
     group: "Стратегия",
-    built: false,
+    built: true,
   },
 ];
 

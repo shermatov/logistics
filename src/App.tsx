@@ -15,18 +15,16 @@ import { M07Inventory } from "./modules/M07Inventory";
 import { M08Distribution } from "./modules/M08Distribution";
 import { M14DecisionEngine } from "./modules/M14DecisionEngine";
 import { CargoModule } from "./modules/CargoModule";
-import {
-  M09Localization,
-  M10Returns,
-  M11FbsOps,
-  M12OwnWarehouse,
-  M13Transportation,
-  M16Alerts,
-  M17Scenarios,
-  M18Crisis,
-  M19Strategy,
-  M20SystemMap,
-} from "./modules/StubModules";
+import { M09Localization } from "./modules/M09Localization";
+import { M10Returns } from "./modules/M10Returns";
+import { M11FbsOps } from "./modules/M11FbsOps";
+import { M12OwnWarehouse } from "./modules/M12OwnWarehouse";
+import { M13Transportation } from "./modules/M13Transportation";
+import { M16Alerts } from "./modules/M16Alerts";
+import { M17Scenarios } from "./modules/M17Scenarios";
+import { M18Crisis } from "./modules/M18Crisis";
+import { M19Strategy } from "./modules/M19Strategy";
+import { M20SystemMap } from "./modules/M20SystemMap";
 
 export default function App() {
   return (
