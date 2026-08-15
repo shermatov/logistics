@@ -7,7 +7,8 @@ import { LevelStack } from "../components/lesson/LevelStack";
 import { QuizBlock } from "../components/lesson/QuizBlock";
 import { ManagerQuestionBlock } from "../components/lesson/ReasoningBlocks";
 import { useProgress } from "../state/progress";
-import { regions, nationalDemandShares, skus } from "../data/sampleData";
+import { regions, nationalDemandShares } from "../data/sampleData";
+import { useDataStore } from "../state/dataStore";
 import { allocationMismatchScore, fmtPct, fmtNum } from "../lib/formulas";
 
 const quizQuestions = [
@@ -37,6 +38,7 @@ const quizQuestions = [
 
 export function M09Localization() {
   const { recordQuiz } = useProgress();
+  const { skus } = useDataStore();
   const [primaryStockSharePct, setPrimaryStockSharePct] = useState(90);
 
   const primaryRegion: (typeof regions)[number] = "Москва";

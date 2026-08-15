@@ -5,7 +5,8 @@ import { LayoutDashboard, AlertTriangle } from "lucide-react";
 import { Card, CardTitle } from "../components/ui/Card";
 import { KpiTile } from "../components/ui/KpiTile";
 import { SectionHeading, StatusDot } from "../components/ui/Misc";
-import { dailyHistory, returnReasonBreakdown, skus, warehouses } from "../data/sampleData";
+import { returnReasonBreakdown } from "../data/sampleData";
+import { useDataStore } from "../state/dataStore";
 import { calcUnitEconomics, daysOfStock, fmtRub, fmtPct, fmtNum } from "../lib/formulas";
 
 function sum(nums: number[]) {
@@ -21,6 +22,7 @@ interface Alert {
 }
 
 export function DashboardPage() {
+  const { skus, warehouses, dailyHistory } = useDataStore();
   const last7 = dailyHistory.slice(-7);
   const prev7 = dailyHistory.slice(-14, -7);
   const last30 = dailyHistory;

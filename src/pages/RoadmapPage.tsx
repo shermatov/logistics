@@ -1,7 +1,8 @@
-import { Milestone, Database, ShieldAlert } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Milestone, Database, ShieldAlert, Server, CheckCircle2, WifiOff } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { SectionHeading, Pill } from "../components/ui/Misc";
-import { wbTariffs, cargoTariffs } from "../data/tariffs";
+import { useDataStore } from "../state/dataStore";
 
 type Status = "done" | "progress" | "planned";
 
@@ -29,23 +30,28 @@ const items: RoadmapItem[] = [
     status: "done",
   },
   {
+    title: "Backend + Postgres для SKU, складов и тарифов",
+    description: "Express + Neon Postgres (server/), CRUD через /admin с admin-токеном. Фронтенд читает живые данные, с автоматическим откатом на встроенные при недоступности backend'а.",
+    status: "done",
+  },
+  {
     title: "Capstone-симуляция на 30 дней",
     description: "Сейчас реализовано 5 ключевых развилок месяца вместо полноценных 30 дней с ежедневными событиями.",
     status: "progress",
   },
   {
     title: "Актуальные тарифы Wildberries",
-    description: "Заменить учебные значения в data/tariffs.ts на текущие данные из официального seller-портала WB, с ручным обновлением по мере изменений.",
+    description: "Backend хранит тарифы в БД и их можно редактировать через /admin, но сами значения по-прежнему учебные. Нужно вручную заменить их текущими данными из официального seller-портала WB.",
     status: "planned",
   },
   {
-    title: "Подключение реальных данных компании",
-    description: "Заменить sampleData.ts на реальные остатки, продажи и склады — через API/БД вместо сгенерированного примера.",
+    title: "Данные настоящей компании вместо примера Upsell",
+    description: "Инфраструктура (БД + CRUD) готова, но в ней по-прежнему лежит вымышленный пример «Upsell». Чтобы это стало реальным инструментом, кто-то должен ввести настоящие SKU/склады через /admin или импортировать их.",
     status: "planned",
   },
   {
     title: "Аккаунты и синхронизация прогресса",
-    description: "Сейчас прогресс живёт только в localStorage браузера. Нужен бэкенд, чтобы прогресс не терялся и был доступен с разных устройств.",
+    description: "Прогресс обучения (пройденные модули, тесты) всё ещё живёт только в localStorage браузера — это отдельный контур от данных компании и пока не подключён к backend'у.",
     status: "planned",
   },
   {
@@ -55,7 +61,24 @@ const items: RoadmapItem[] = [
   },
 ];
 
+function SourceBadge({ source }: { source: "live" | "fallback" | "loading" }) {
+  if (source === "loading") return <Pill tone="neutral">Загрузка…</Pill>;
+  if (source === "live")
+    return (
+      <Pill tone="green">
+        <CheckCircle2 size={11} strokeWidth={2.4} /> backend
+      </Pill>
+    );
+  return (
+    <Pill tone="orange">
+      <WifiOff size={11} strokeWidth={2.4} /> встроенный fallback
+    </Pill>
+  );
+}
+
 export function RoadmapPage() {
+  const { wbTariffs, cargoTariffs, skus, warehouses, sources, backendConfigured } = useDataStore();
+
   return (
     <div className="flex flex-col gap-8 max-w-4xl">
       <div
@@ -88,44 +111,79 @@ export function RoadmapPage() {
         <SectionHeading eyebrow="Data sources" title="Откуда данные" />
         <div className="flex flex-col gap-3">
           <Card className="relative overflow-hidden">
+            <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--series-6)" }} aria-hidden />
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0" style={{ background: "color-mix(in srgb, var(--series-6) 16%, transparent)", color: "var(--series-6)" }}>
+                  <Server size={14} strokeWidth={2.4} />
+                </span>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Backend</h3>
+              </div>
+              <SourceBadge source={sources.skus} />
+            </div>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              {backendConfigured ? (
+                <>
+                  Express + Postgres (Neon), развёрнут отдельно (<code>server/</code>). Изменения через{" "}
+                  <Link to="/admin" className="underline" style={{ color: "var(--series-6)" }}>/admin</Link> сразу видны во всех
+                  модулях и калькуляторах, использующих живые данные. Если backend недоступен — приложение автоматически
+                  переключается на встроенный набор данных, чтобы курс продолжал работать offline.
+                </>
+              ) : (
+                "Backend не настроен в этой сборке (VITE_API_URL пуст) — приложение работает целиком на встроенных данных."
+              )}
+            </p>
+          </Card>
+
+          <Card className="relative overflow-hidden">
             <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--series-2)" }} aria-hidden />
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0" style={{ background: "color-mix(in srgb, var(--series-2) 16%, transparent)", color: "var(--series-2)" }}>
-                <ShieldAlert size={14} strokeWidth={2.4} />
-              </span>
-              <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Тарифы (WB и cargo)</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0" style={{ background: "color-mix(in srgb, var(--series-2) 16%, transparent)", color: "var(--series-2)" }}>
+                  <ShieldAlert size={14} strokeWidth={2.4} />
+                </span>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Тарифы (WB и cargo)</h3>
+              </div>
+              <SourceBadge source={sources.tariffs} />
             </div>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               Учебные значения, актуальные на <strong>{wbTariffs.as_of_date}</strong> (WB) и <strong>{cargoTariffs.as_of_date}</strong> (cargo) —
-              не текущие реальные тарифы Wildberries или ставки перевозчиков. Явно помечены <code>is_assumption: true</code> в{" "}
-              <code>src/data/tariffs.ts</code> и вынесены отдельно от формул, чтобы их можно было обновить, не трогая логику расчётов.
+              не текущие реальные тарифы Wildberries или ставки перевозчиков, даже когда они приходят из backend'а.
+              Явно помечены <code>is_assumption: true</code> и редактируются через{" "}
+              <Link to="/admin" className="underline" style={{ color: "var(--series-2)" }}>/admin</Link>, отдельно от формул.
             </p>
           </Card>
+
           <Card className="relative overflow-hidden">
             <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--series-4)" }} aria-hidden />
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0" style={{ background: "color-mix(in srgb, var(--series-4) 16%, transparent)", color: "var(--series-4)" }}>
-                <Database size={14} strokeWidth={2.4} />
-              </span>
-              <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Компания «Upsell», SKU, склады, продажи</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0" style={{ background: "color-mix(in srgb, var(--series-4) 16%, transparent)", color: "var(--series-4)" }}>
+                  <Database size={14} strokeWidth={2.4} />
+                </span>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Компания «Upsell», SKU, склады</h3>
+              </div>
+              <SourceBadge source={sources.skus} />
             </div>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              Полностью вымышленный пример, сгенерированный детерминированным генератором прямо в коде (
-              <code>src/data/sampleData.ts</code>). 24 SKU, 5 складов, 30-дневная история — не выгрузка из реальной
-              системы и не связаны с какой-либо настоящей компанией.
+              {skus.length} SKU, {warehouses.length} складов — по-прежнему вымышленный пример, изначально сгенерированный
+              детерминированным генератором и теперь живущий в Postgres. Редактируемо через{" "}
+              <Link to="/admin" className="underline" style={{ color: "var(--series-4)" }}>/admin</Link>, но не связано с
+              какой-либо настоящей компанией.
             </p>
           </Card>
+
           <Card className="relative overflow-hidden">
             <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--series-1)" }} aria-hidden />
             <div className="flex items-center gap-2 mb-2">
               <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0" style={{ background: "color-mix(in srgb, var(--series-1) 16%, transparent)", color: "var(--series-1)" }}>
                 <Database size={14} strokeWidth={2.4} />
               </span>
-              <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Ваш прогресс</h3>
+              <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Ваш прогресс обучения</h3>
             </div>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              Пройденные модули и результаты тестов хранятся только в <code>localStorage</code> этого браузера — нет
-              аккаунта и нет сервера. Очистка данных браузера или переход на другое устройство обнулит прогресс.
+              Пройденные модули и результаты тестов — отдельный контур от данных компании выше, хранится только в{" "}
+              <code>localStorage</code> этого браузера. Нет аккаунта и нет синхронизации между устройствами.
             </p>
           </Card>
         </div>

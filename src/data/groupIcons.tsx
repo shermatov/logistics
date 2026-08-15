@@ -11,6 +11,7 @@ import {
   UserCog,
   Trophy,
   Milestone,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,4 +31,5 @@ export const topNavIcons = {
   manager: UserCog,
   capstone: Trophy,
   roadmap: Milestone,
+  admin: ShieldCheck,
 };

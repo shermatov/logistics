@@ -20,7 +20,7 @@ import {
   fmtNum,
 } from "../lib/formulas";
 import type { CargoMode } from "../data/types";
-import { cargoTariffs } from "../data/tariffs";
+import { useDataStore } from "../state/dataStore";
 
 const MODE_OPTIONS: { value: CargoMode; label: string }[] = [
   { value: "consolidated_lcl", label: "Сборный груз (LCL)" },
@@ -100,6 +100,7 @@ const quizQuestions = [
 
 export function CargoModule() {
   const { recordQuiz } = useProgress();
+  const { cargoTariffs } = useDataStore();
 
   // --- Cargo cost calculator state ---
   const [units, setUnits] = useState(2000);
@@ -127,7 +128,7 @@ export function CargoModule() {
     russiaInlandDelivery: ruInlandDeliveryTotal,
     warehouseAndFulfillment: warehouseFulfillmentTotal,
     insuranceRate: insuranceRatePct / 100,
-  });
+  }, cargoTariffs);
 
   const costPerUnit = cargoResult.totalCargoCost / units;
   const costPerKg = cargoResult.totalCargoCost / (weightPerUnitKg * units);
@@ -169,7 +170,7 @@ export function CargoModule() {
     unitHeightCm: tHeight,
     unitWeightKg: tWeight,
     quantity: tQuantity,
-  });
+  }, cargoTariffs);
 
   // --- Cargo decision scenario (§43.13) ---
   const [kgStock, setKgStock] = useState(5000);

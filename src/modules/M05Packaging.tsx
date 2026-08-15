@@ -8,7 +8,7 @@ import { QuizBlock } from "../components/lesson/QuizBlock";
 import { WhyChain } from "../components/lesson/ReasoningBlocks";
 import { useProgress } from "../state/progress";
 import { volumeLiters, volumeBracket, estimatedLogisticsCostPerUnit, logisticsCostShareOfPrice, fmtRub, fmtPct, fmtNum } from "../lib/formulas";
-import { wbTariffs } from "../data/tariffs";
+import { useDataStore } from "../state/dataStore";
 
 const quizQuestions = [
   {
@@ -37,6 +37,7 @@ const quizQuestions = [
 
 export function M05Packaging() {
   const { recordQuiz } = useProgress();
+  const { wbTariffs } = useDataStore();
 
   const [length, setLength] = useState(30);
   const [width, setWidth] = useState(22);
@@ -47,8 +48,8 @@ export function M05Packaging() {
   const [coefficient, setCoefficient] = useState(1.0);
 
   const liters = volumeLiters(length, width, height);
-  const bracket = volumeBracket(liters);
-  const costPerUnit = estimatedLogisticsCostPerUnit(liters, coefficient);
+  const bracket = volumeBracket(liters, wbTariffs);
+  const costPerUnit = estimatedLogisticsCostPerUnit(liters, coefficient, wbTariffs);
   const share = logisticsCostShareOfPrice(costPerUnit, price);
   const totalForBatch = costPerUnit * quantity;
 

@@ -4,7 +4,7 @@ import { Trophy, RotateCcw } from "lucide-react";
 import { Card, CardTitle } from "../components/ui/Card";
 import { SectionHeading, Pill } from "../components/ui/Misc";
 import { KpiTile } from "../components/ui/KpiTile";
-import { skus, warehouses } from "../data/sampleData";
+import { useDataStore } from "../state/dataStore";
 import { fmtNum, fmtPct } from "../lib/formulas";
 
 interface Option {
@@ -76,6 +76,7 @@ const events: DayEvent[] = [
 ];
 
 export function CapstonePage() {
+  const { skus, warehouses } = useDataStore();
   const [dayIndex, setDayIndex] = useState(0);
   const [log, setLog] = useState<{ day: number; choice: string; note: string }[]>([]);
   const [metrics, setMetrics] = useState({ profit: 0, service: 0, capital: 0 });

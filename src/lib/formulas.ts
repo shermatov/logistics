@@ -1,7 +1,12 @@
 // Central calculation engine (§33). Every formula used anywhere in the app
 // lives here, so a number always has exactly one implementation.
+//
+// Tariff-dependent functions take the tariff table as an optional parameter,
+// defaulting to the bundled static fallback (data/tariffs.ts). Callers that
+// have live tariffs from the backend (via useDataStore) should pass them
+// explicitly; everything else keeps working unchanged against the fallback.
 import { wbTariffs, cargoTariffs } from "../data/tariffs";
-import type { CargoMode } from "../data/types";
+import type { CargoMode, TariffConfig } from "../data/types";
 
 // ---------- Packaging & volume (§5, §8) ----------
 
@@ -13,16 +18,13 @@ export function volumeM3(lengthCm: number, widthCm: number, heightCm: number): n
   return (lengthCm * widthCm * heightCm) / 1_000_000;
 }
 
-export function volumeBracket(liters: number) {
-  return (
-    wbTariffs.volume_brackets.find((b) => liters <= b.max_liters) ??
-    wbTariffs.volume_brackets[wbTariffs.volume_brackets.length - 1]
-  );
+export function volumeBracket(liters: number, tariffs: TariffConfig = wbTariffs) {
+  return tariffs.volume_brackets.find((b) => liters <= b.max_liters) ?? tariffs.volume_brackets[tariffs.volume_brackets.length - 1];
 }
 
-export function estimatedLogisticsCostPerUnit(liters: number, coefficient = 1): number {
-  const bracket = volumeBracket(liters);
-  return (wbTariffs.logistics_base_rub + wbTariffs.logistics_per_liter_rub * liters) * bracket.coefficient * coefficient;
+export function estimatedLogisticsCostPerUnit(liters: number, coefficient = 1, tariffs: TariffConfig = wbTariffs): number {
+  const bracket = volumeBracket(liters, tariffs);
+  return (tariffs.logistics_base_rub + tariffs.logistics_per_liter_rub * liters) * bracket.coefficient * coefficient;
 }
 
 export function logisticsCostShareOfPrice(logisticsCost: number, sellingPrice: number): number {
@@ -229,22 +231,22 @@ export interface CargoCostResult {
   transitDaysRange: [number, number];
 }
 
-export function calcCargoCost(input: CargoCostInputs): CargoCostResult {
-  const rate = cargoTariffs.modes[input.mode];
+export function calcCargoCost(input: CargoCostInputs, tariffs: typeof cargoTariffs = cargoTariffs): CargoCostResult {
+  const rate = tariffs.modes[input.mode];
   const freightByWeight = input.weightKg * rate.cost_per_kg_rub;
   const freightByVolume = input.volumeM3 * rate.cost_per_m3_rub;
   // Carriers bill whichever is higher (weight vs volumetric) — standard freight practice.
   const cross_border_freight = Math.max(freightByWeight, freightByVolume);
   const insurance = (input.insuranceRate ?? 0) * input.declaredValue;
-  const losses_and_damage = cargoTariffs.loss_and_damage_rate * input.declaredValue;
+  const losses_and_damage = tariffs.loss_and_damage_rate * input.declaredValue;
 
   const breakdown = {
     product_cost: input.productCostTotal,
     packaging: input.packagingTotal,
     kyrgyzstan_local_transport: input.kyrgyzstanLocalTransport,
     cross_border_freight,
-    customs_and_documentation: cargoTariffs.customs_and_documentation_per_shipment_rub,
-    broker_fee: cargoTariffs.broker_fee_per_shipment_rub,
+    customs_and_documentation: tariffs.customs_and_documentation_per_shipment_rub,
+    broker_fee: tariffs.broker_fee_per_shipment_rub,
     russia_inland_delivery: input.russiaInlandDelivery,
     warehouse_and_fulfillment: input.warehouseAndFulfillment,
     insurance,
@@ -260,8 +262,8 @@ export function calcCargoCost(input: CargoCostInputs): CargoCostResult {
     freightByWeight,
     freightByVolume,
     transitDaysRange: [
-      rate.min_days + cargoTariffs.border_days_min,
-      rate.max_days + cargoTariffs.border_days_max,
+      rate.min_days + tariffs.border_days_min,
+      rate.max_days + tariffs.border_days_max,
     ],
   };
 }
@@ -335,9 +337,9 @@ export interface CapacityResult {
   maxUnitsThatFit: number;
 }
 
-export function calcTruckCapacity(input: CapacityInput): CapacityResult {
-  const truckVolume = input.truckVolumeM3 ?? cargoTariffs.truck_capacity_m3;
-  const truckWeight = input.truckWeightKg ?? cargoTariffs.truck_capacity_kg;
+export function calcTruckCapacity(input: CapacityInput, tariffs: typeof cargoTariffs = cargoTariffs): CapacityResult {
+  const truckVolume = input.truckVolumeM3 ?? tariffs.truck_capacity_m3;
+  const truckWeight = input.truckWeightKg ?? tariffs.truck_capacity_kg;
   const unitVolume = (input.unitLengthCm * input.unitWidthCm * input.unitHeightCm) / 1_000_000;
 
   const totalVolumeM3 = unitVolume * input.quantity;
