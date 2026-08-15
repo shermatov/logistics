@@ -1,104 +1,62 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, RotateCcw } from "lucide-react";
+import { Trophy, RotateCcw, Zap, AlertOctagon, Info, CheckCircle2 } from "lucide-react";
 import { Card, CardTitle } from "../components/ui/Card";
-import { SectionHeading, Pill } from "../components/ui/Misc";
+import { SectionHeading, Pill, ProgressBar } from "../components/ui/Misc";
 import { KpiTile } from "../components/ui/KpiTile";
 import { useDataStore } from "../state/dataStore";
-import { fmtNum, fmtPct } from "../lib/formulas";
+import { fmtNum, fmtPct, fmtRub } from "../lib/formulas";
+import {
+  createInitialState,
+  applyDecision,
+  advanceUntilDecisionOrEnd,
+  runAutopilot,
+  summarize,
+  HERO_SKUS,
+  type SimState,
+  type LogEntry,
+} from "../lib/capstoneSim";
 
-interface Option {
-  label: string;
-  profitDelta: number;
-  serviceDelta: number;
-  capitalDelta: number;
-  note: string;
+const LOG_ICON: Record<LogEntry["kind"], typeof Info> = {
+  info: Info,
+  event: Zap,
+  decision: CheckCircle2,
+  stockout: AlertOctagon,
+};
+const LOG_COLOR: Record<LogEntry["kind"], string> = {
+  info: "var(--text-muted)",
+  event: "var(--series-4)",
+  decision: "var(--series-1)",
+  stockout: "var(--status-critical)",
+};
+
+function randomSeed() {
+  return Math.floor(Math.random() * 1_000_000_000);
 }
-
-interface DayEvent {
-  day: number;
-  title: string;
-  description: string;
-  options: Option[];
-}
-
-const events: DayEvent[] = [
-  {
-    day: 1,
-    title: "Старт месяца",
-    description: "Все склады в норме. SKU-004 (Товары для дома) показывает рост продаж третью неделю подряд — сток в России рассчитан на 9 дней.",
-    options: [
-      { label: "Заказать срочную cargo-партию из Кыргызстана уже сейчас", profitDelta: -2, serviceDelta: 3, capitalDelta: -3, note: "Опережающее решение снижает риск stockout, но замораживает капитал раньше срока." },
-      { label: "Подождать ещё неделю данных, чтобы подтвердить тренд", profitDelta: 1, serviceDelta: -2, capitalDelta: 1, note: "Экономит капитал, но повышает риск не успеть к моменту, когда сток закончится." },
-      { label: "Частично перебросить сток с менее загруженного склада", profitDelta: 0, serviceDelta: 1, capitalDelta: 0, note: "Быстрое и дешёвое решение, но временное — не устраняет корень проблемы (нужно больше стока в системе)." },
-    ],
-  },
-  {
-    day: 4,
-    title: "Рост return rate у fashion-категории",
-    description: "Return rate по 'Женская одежда' вырос с 30% до 38% за неделю. Основная причина в комментариях — 'размер не подошёл'.",
-    options: [
-      { label: "Обновить размерную сетку в карточках товара", profitDelta: 2, serviceDelta: 1, capitalDelta: 0, note: "Устраняет корневую причину, эффект проявится через 1-2 недели." },
-      { label: "Временно снять SKU с рекламы, чтобы снизить объём заказов", profitDelta: -1, serviceDelta: 0, capitalDelta: 1, note: "Снижает абсолютные потери от возвратов, но и выручку." },
-      { label: "Ничего не менять, дождаться месячной статистики", profitDelta: -2, serviceDelta: -1, capitalDelta: -1, note: "Продолжающийся высокий return rate копит убыток каждый день промедления." },
-    ],
-  },
-  {
-    day: 9,
-    title: "Склад в Екатеринбурге приближается к пределу",
-    description: "Загрузка склада RU-EKB достигла 88% ёмкости. Плановая поставка придёт через 6 дней.",
-    options: [
-      { label: "Приостановить отгрузку в этот склад, перенаправить в Новосибирск", profitDelta: 0, serviceDelta: -1, capitalDelta: 1, note: "Предотвращает отказ в приёмке, но временно ухудшает доступность товара для Урала." },
-      { label: "Ускорить вывоз медленно оборачивающихся SKU с этого склада", profitDelta: 1, serviceDelta: 1, capitalDelta: 1, note: "Освобождает место без потери доступности ходовых товаров — требует больше операционных усилий." },
-      { label: "Игнорировать — поставка скоро придёт сама, разберётся", profitDelta: -1, serviceDelta: -3, capitalDelta: -1, note: "Риск отказа в приёмке новых партий в течение 6 дней слишком высок, чтобы игнорировать." },
-    ],
-  },
-  {
-    day: 15,
-    title: "Тариф на международную перевозку вырос на 15%",
-    description: "Перевозчик поднял ставку на маршруте Бишкек → Москва. Следующая cargo-партия на 3200 единиц запланирована через 5 дней.",
-    options: [
-      { label: "Увеличить размер партии, чтобы снизить cost per unit", profitDelta: 2, serviceDelta: 0, capitalDelta: -2, note: "Классический trade-off: эффективность перевозки против замороженного капитала." },
-      { label: "Найти альтернативного перевозчика в сжатые сроки", profitDelta: 1, serviceDelta: -1, capitalDelta: 0, note: "Может сэкономить, но риск задержки поставки из-за смены партнёра в последний момент." },
-      { label: "Отправить партию как запланировано, принять рост тарифа", profitDelta: -1, serviceDelta: 1, capitalDelta: 0, note: "Безопасно для сроков, но полностью съедает потенциальную экономию." },
-    ],
-  },
-  {
-    day: 22,
-    title: "Внезапный всплеск спроса на аксессуары",
-    description: "SKU-012 (Аксессуары) продажи выросли в 2.5 раза за 3 дня — вирусный момент в соцсетях. Сток в России на 6 дней при обычном темпе, то есть на 2-3 дня при новом.",
-    options: [
-      { label: "Экстренно перебросить весь доступный сток из Кыргызстана", profitDelta: 3, serviceDelta: 2, capitalDelta: -2, note: "Ловит окно спроса, пока оно не закрылось — типичное поведение для вирального момента." },
-      { label: "Ограничить количество единиц в заказе, чтобы растянуть остаток", profitDelta: -1, serviceDelta: -1, capitalDelta: 1, note: "Экономит сток, но теряет часть возможной выручки от всплеска." },
-      { label: "Не реагировать, всплеск может быть кратковременным", profitDelta: -2, serviceDelta: -2, capitalDelta: 0, note: "Риск: если всплеск устойчивый, упущена значительная выручка." },
-    ],
-  },
-];
 
 export function CapstonePage() {
-  const { skus, warehouses } = useDataStore();
-  const [dayIndex, setDayIndex] = useState(0);
-  const [log, setLog] = useState<{ day: number; choice: string; note: string }[]>([]);
-  const [metrics, setMetrics] = useState({ profit: 0, service: 0, capital: 0 });
+  const { skus, warehouses, wbTariffs, cargoTariffs } = useDataStore();
+  const tariffs = useMemo(() => ({ wb: wbTariffs, cargo: cargoTariffs }), [wbTariffs, cargoTariffs]);
 
-  const current = events[dayIndex];
-  const finished = dayIndex >= events.length;
+  const [seed, setSeed] = useState(randomSeed);
+  const [sim, setSim] = useState<SimState>(() => advanceUntilDecisionOrEnd(createInitialState(), seed, tariffs, warehouses));
 
-  function choose(opt: Option) {
-    setMetrics((m) => ({
-      profit: m.profit + opt.profitDelta,
-      service: m.service + opt.serviceDelta,
-      capital: m.capital + opt.capitalDelta,
-    }));
-    setLog((l) => [...l, { day: current.day, choice: opt.label, note: opt.note }]);
-    setDayIndex((i) => i + 1);
+  const results = useMemo(() => summarize(sim), [sim]);
+  const baseline = useMemo(() => (sim.finished ? summarize(runAutopilot(seed, tariffs, warehouses)) : null), [sim.finished, seed, tariffs, warehouses]);
+
+  function choose(optionId: string) {
+    if (!sim.pendingDecision) return;
+    const resolved = applyDecision(sim, sim.pendingDecision, optionId, tariffs, warehouses);
+    setSim(advanceUntilDecisionOrEnd(resolved, seed, tariffs, warehouses));
   }
 
   function restart() {
-    setDayIndex(0);
-    setLog([]);
-    setMetrics({ profit: 0, service: 0, capital: 0 });
+    const newSeed = randomSeed();
+    setSeed(newSeed);
+    setSim(advanceUntilDecisionOrEnd(createInitialState(), newSeed, tariffs, warehouses));
   }
+
+  const decision = sim.pendingDecision;
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl">
@@ -124,89 +82,171 @@ export function CapstonePage() {
           </div>
         </div>
         <p className="relative text-sm mt-3 max-w-2xl" style={{ color: "var(--text-secondary)" }}>
-          Вымышленная компания Upsell: {skus.length} SKU, {warehouses.length} склада (Кыргызстан + Россия), FBS и
-          FBW, разные категории и return rate. В течение месяца возникают события — принимайте решения, как
-          руководитель логистики, и смотрите на совокупный эффект в конце.
+          Полная линейка Upsell — {skus.length} SKU и {warehouses.length} складов, но день за днём вы управляете тремя
+          показательными SKU с разным профилем риска. Каждое решение считается реальными формулами (reorder point,
+          cargo cost, lead time) — это не заранее прописанный сценарий, а работающая модель склада.
         </p>
       </div>
 
       <section>
-        <SectionHeading eyebrow="Company snapshot" title="Upsell — исходные данные" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiTile label="SKU в ассортименте" value={fmtNum(skus.length)} />
-          <KpiTile label="Складов" value={fmtNum(warehouses.length)} />
-          <KpiTile label="FBW доля SKU" value={fmtPct(skus.filter((s) => s.fulfillment_model === "FBW").length / skus.length)} />
-          <KpiTile label="Средний return rate" value={fmtPct(skus.reduce((a, s) => a + s.return_rate, 0) / skus.length)} />
+        <SectionHeading eyebrow="Hero SKUs" title="Чем вы управляете" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {HERO_SKUS.map((s) => {
+            const rt = sim.skus[s.id];
+            return (
+              <Card key={s.id}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{s.name}</div>
+                  <Pill tone={rt.fulfillment === "FBW" ? "blue" : "orange"}>{rt.fulfillment}</Pill>
+                </div>
+                <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                  Return rate {fmtPct(s.returnRate)} · {fmtNum(s.baseVelocity)} ед/день база
+                </div>
+                <div className="text-xs mt-1 tabular" style={{ color: "var(--text-muted)" }}>
+                  Сток в РФ сейчас: {fmtNum(rt.ruStock)} ед. ({rt.warehouseId})
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </section>
 
       <section>
-        <SectionHeading eyebrow="Simulation" title={finished ? "Итоги месяца" : `День ${current.day} из 30`} />
-        {!finished ? (
-          <Card>
-            <CardTitle>{current.title}</CardTitle>
+        <div className="flex items-center justify-between mb-3">
+          <SectionHeading eyebrow="Simulation" title={sim.finished ? "Итоги месяца" : `День ${sim.day} из 30`} />
+        </div>
+        {!sim.finished && (
+          <div className="mb-4">
+            <ProgressBar pct={sim.day / 30} />
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <KpiTile label="Profit пока" value={fmtRub(results.profit)} status={results.profit > 0 ? "good" : "critical"} />
+          <KpiTile label="Service level" value={fmtPct(results.serviceLevelPct)} status={results.serviceLevelPct > 0.9 ? "good" : results.serviceLevelPct > 0.75 ? "warning" : "critical"} />
+          <KpiTile label="Логистика % от выручки" value={fmtPct(results.logisticsCostPctRevenue)} />
+          <KpiTile label="Возвраты" value={fmtRub(results.returnCost)} />
+        </div>
+
+        {!sim.finished && decision ? (
+          <Card className="relative overflow-hidden">
+            <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--gradient-warm)" }} aria-hidden />
+            <CardTitle>{decision.title}</CardTitle>
             <p className="text-sm mb-4" style={{ color: "var(--text-primary)" }}>
-              {current.description}
+              {decision.description}
             </p>
             <div className="flex flex-col gap-2">
-              {current.options.map((opt) => (
+              {decision.options.map((opt) => (
                 <button
-                  key={opt.label}
-                  onClick={() => choose(opt)}
+                  key={opt.id}
+                  onClick={() => choose(opt.id)}
                   className="text-left text-sm rounded-xl border px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:border-[var(--series-4)]"
                   style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-primary)", boxShadow: "var(--shadow-xs)" }}
                 >
-                  {opt.label}
+                  <div className="font-medium">{opt.label}</div>
+                  <div className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>{opt.note}</div>
                 </button>
               ))}
             </div>
           </Card>
-        ) : (
+        ) : sim.finished ? (
           <>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <KpiTile label="Profit score" value={String(metrics.profit)} status={metrics.profit > 3 ? "good" : metrics.profit >= 0 ? "warning" : "critical"} />
-              <KpiTile label="Service level score" value={String(metrics.service)} status={metrics.service > 2 ? "good" : metrics.service >= 0 ? "warning" : "critical"} />
-              <KpiTile label="Capital efficiency score" value={String(metrics.capital)} status={metrics.capital >= 0 ? "good" : "warning"} />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+              <KpiTile label="Выручка" value={fmtRub(results.revenue)} />
+              <KpiTile label="Оборачиваемость запасов" value={fmtNum(results.inventoryTurnover, 1) + "x"} />
+              <KpiTile
+                label="Capital efficiency"
+                value={fmtPct(results.capitalEfficiency)}
+                status={results.capitalEfficiency > 0 ? "good" : "critical"}
+              />
             </div>
-            <Card>
-              <CardTitle>Журнал решений</CardTitle>
-              <div className="flex flex-col gap-3">
-                {log.map((l, i) => (
-                  <div key={i} className="text-sm">
-                    <div className="font-medium" style={{ color: "var(--text-primary)" }}>
-                      День {l.day}: {l.choice}
-                    </div>
-                    <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                      {l.note}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+
+            {baseline && (
+              <Card className="mb-4">
+                <CardTitle>
+                  Сравнение с эталонной стратегией <Pill tone="blue">не «математический оптимум»</Pill>
+                </CardTitle>
+                <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
+                  Тот же месяц (тот же seed событий), но решения принимались по простому правилу: всегда самая быстрая
+                  доставка, всегда чинить причину возврата сразу, всегда реагировать на всплеск спроса. Это разумный
+                  ориентир, а не доказанно лучшее решение.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <ComparisonTile label="Profit" mine={results.profit} base={baseline.profit} fmt={fmtRub} />
+                  <ComparisonTile label="Service level" mine={results.serviceLevelPct} base={baseline.serviceLevelPct} fmt={fmtPct} />
+                  <ComparisonTile label="Возвраты" mine={results.returnCost} base={baseline.returnCost} fmt={fmtRub} invert />
+                  <ComparisonTile label="Capital efficiency" mine={results.capitalEfficiency} base={baseline.capitalEfficiency} fmt={fmtPct} />
+                </div>
+              </Card>
+            )}
+
             <button
               onClick={restart}
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold rounded-[var(--radius-pill)] px-5 py-2.5 w-fit transition-transform duration-150 hover:-translate-y-0.5"
+              className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold rounded-[var(--radius-pill)] px-5 py-2.5 w-fit transition-transform duration-150 hover:-translate-y-0.5"
               style={{ background: "var(--gradient-brand)", color: "white", boxShadow: "var(--shadow-sm)" }}
             >
               <RotateCcw size={14} strokeWidth={2.4} />
-              Пройти заново
+              Пройти заново (новый месяц)
             </button>
           </>
-        )}
+        ) : null}
+
+        <Card padded={false}>
+          <div className="p-5 pb-0">
+            <CardTitle>Журнал месяца</CardTitle>
+          </div>
+          <div className="max-h-80 overflow-y-auto px-5 pb-5 flex flex-col gap-2">
+            {[...sim.log].reverse().map((entry, i) => {
+              const Icon = LOG_ICON[entry.kind];
+              return (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <span className="mt-0.5 shrink-0" style={{ color: LOG_COLOR[entry.kind] }}>
+                    <Icon size={13} strokeWidth={2.4} />
+                  </span>
+                  <span style={{ color: "var(--text-secondary)" }}>
+                    <span className="font-mono text-xs mr-1.5" style={{ color: "var(--text-muted)" }}>
+                      д{entry.day}
+                    </span>
+                    {entry.text}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
       </section>
 
       <Card>
-        <CardTitle>О симуляции <Pill tone="orange">v1</Pill></CardTitle>
+        <CardTitle>
+          О симуляции <Pill tone="green">v2</Pill>
+        </CardTitle>
         <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          Это первая версия capstone-симуляции: пять ключевых развилок месяца с прямым эффектом на profit, service
-          level и capital efficiency. Полная версия по спецификации (события каждый из 30 дней, интеграция с
-          реальными формулами reorder point / fully landed cost, сравнение с оптимальной стратегией day-by-day) —
-          следующий шаг развития этого модуля.
+          Полноценная 30-дневная симуляция: спрос генерируется каждый день, решения о пополнении триггерятся реальной
+          reorder-point формулой, стоимость доставки считается через тот же cargo-калькулятор, что и в Модуле 21.
+          Упрощение: только 3 показательных SKU (не все {skus.length}) и склад в Кыргызстане считается неограниченным
+          по поставкам — симуляция фокусируется на решениях в России, а не на производственной цепочке.
         </p>
         <Link to="/roadmap" className="inline-block text-sm underline mt-2" style={{ color: "var(--series-3)" }}>
           Полный roadmap проекта →
         </Link>
       </Card>
+    </div>
+  );
+}
+
+function ComparisonTile({ label, mine, base, fmt, invert }: { label: string; mine: number; base: number; fmt: (n: number) => string; invert?: boolean }) {
+  const better = invert ? mine < base : mine > base;
+  return (
+    <div className="rounded-lg p-3" style={{ background: "var(--surface-2)" }}>
+      <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </div>
+      <div className="text-sm font-bold tabular" style={{ color: "var(--text-primary)" }}>
+        {fmt(mine)}
+      </div>
+      <div className="text-xs tabular" style={{ color: better ? "var(--status-good)" : "var(--status-critical)" }}>
+        эталон: {fmt(base)}
+      </div>
     </div>
   );
 }
