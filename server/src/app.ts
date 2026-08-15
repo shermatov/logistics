@@ -22,3 +22,9 @@ app.use("/api/skus", skusRouter);
 app.use("/api/warehouses", warehousesRouter);
 app.use("/api/tariffs", tariffsRouter);
 app.use("/api/daily-metrics", dailyMetricsRouter);
+
+// Vercel's zero-config Express detection wires this file directly as a
+// function for the root path (separate from api/index.ts's rewrite-based
+// routing) and requires a default export — without this, GET / 500s with
+// "Invalid export found... default export must be a function".
+export default app;
