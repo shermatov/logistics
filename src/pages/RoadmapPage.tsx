@@ -3,6 +3,8 @@ import { Milestone, Database, ShieldAlert, Server, CheckCircle2, WifiOff } from 
 import { Card } from "../components/ui/Card";
 import { SectionHeading, Pill } from "../components/ui/Misc";
 import { useDataStore } from "../state/dataStore";
+import { useAuth } from "../state/auth";
+import { useProgress } from "../state/progress";
 
 type Status = "done" | "progress" | "planned";
 
@@ -51,8 +53,8 @@ const items: RoadmapItem[] = [
   },
   {
     title: "Аккаунты и синхронизация прогресса",
-    description: "Прогресс обучения (пройденные модули, тесты) всё ещё живёт только в localStorage браузера — это отдельный контур от данных компании и пока не подключён к backend'у.",
-    status: "planned",
+    description: "Регистрация/вход (/account) с паролем, хешированным через scrypt, JWT-токен на 30 дней. Пройденные модули и тесты хранятся в user_progress и синхронизируются на любом устройстве. Ограничения: нет подтверждения email и восстановления пароля — это не полноценная production-авторизация.",
+    status: "done",
   },
   {
     title: "Экзамены по блокам курса",
@@ -78,6 +80,8 @@ function SourceBadge({ source }: { source: "live" | "fallback" | "loading" }) {
 
 export function RoadmapPage() {
   const { wbTariffs, cargoTariffs, skus, warehouses, sources, backendConfigured } = useDataStore();
+  const { token } = useAuth();
+  const { syncStatus } = useProgress();
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl">
@@ -175,15 +179,29 @@ export function RoadmapPage() {
 
           <Card className="relative overflow-hidden">
             <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--series-1)" }} aria-hidden />
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0" style={{ background: "color-mix(in srgb, var(--series-1) 16%, transparent)", color: "var(--series-1)" }}>
-                <Database size={14} strokeWidth={2.4} />
-              </span>
-              <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Ваш прогресс обучения</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0" style={{ background: "color-mix(in srgb, var(--series-1) 16%, transparent)", color: "var(--series-1)" }}>
+                  <Database size={14} strokeWidth={2.4} />
+                </span>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Ваш прогресс обучения</h3>
+              </div>
+              {token ? <SourceBadge source={syncStatus === "synced" ? "live" : syncStatus === "loading" ? "loading" : "fallback"} /> : <Pill tone="neutral">не в аккаунте</Pill>}
             </div>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              Пройденные модули и результаты тестов — отдельный контур от данных компании выше, хранится только в{" "}
-              <code>localStorage</code> этого браузера. Нет аккаунта и нет синхронизации между устройствами.
+              {token ? (
+                <>
+                  Пройденные модули и результаты тестов — отдельный контур от данных компании выше, привязан к вашему{" "}
+                  <Link to="/account" className="underline" style={{ color: "var(--series-1)" }}>аккаунту</Link> и синхронизируется
+                  через <code>user_progress</code> в базе данных.
+                </>
+              ) : (
+                <>
+                  Пройденные модули и результаты тестов хранятся только в <code>localStorage</code> этого браузера.{" "}
+                  <Link to="/account" className="underline" style={{ color: "var(--series-1)" }}>Создайте аккаунт</Link>, чтобы
+                  синхронизировать их между устройствами.
+                </>
+              )}
             </p>
           </Card>
         </div>

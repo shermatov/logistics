@@ -4,6 +4,8 @@ import { skusRouter } from "./routes/skus.js";
 import { warehousesRouter } from "./routes/warehouses.js";
 import { tariffsRouter } from "./routes/tariffs.js";
 import { dailyMetricsRouter } from "./routes/dailyMetrics.js";
+import { authRouter } from "./routes/auth.js";
+import { progressRouter } from "./routes/progress.js";
 
 export const app = express();
 
@@ -22,6 +24,8 @@ app.use("/api/skus", skusRouter);
 app.use("/api/warehouses", warehousesRouter);
 app.use("/api/tariffs", tariffsRouter);
 app.use("/api/daily-metrics", dailyMetricsRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/progress", progressRouter);
 
 // Vercel's zero-config Express detection wires this file directly as a
 // function for the root path (separate from api/index.ts's rewrite-based

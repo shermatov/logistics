@@ -49,3 +49,19 @@ CREATE TABLE IF NOT EXISTS daily_metrics (
   stock_kg NUMERIC NOT NULL,
   stock_ru NUMERIC NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  password_salt TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- One JSON blob per user, mirroring the shape localStorage used before
+-- (completedModules / quizResults / decisionScores) — see src/state/progress.tsx.
+CREATE TABLE IF NOT EXISTS user_progress (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  data JSONB NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

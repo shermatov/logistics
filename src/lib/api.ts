@@ -87,3 +87,36 @@ export function deleteWarehouse(warehouseId: string, adminToken: string) {
 export function updateTariffs(key: "wb" | "cargo", data: unknown, adminToken: string) {
   return request<{ ok: true }>(`/api/tariffs/${key}`, { method: "PUT", headers: authHeaders(adminToken), body: JSON.stringify(data) });
 }
+
+// ---- Accounts & progress sync ----
+
+export interface AuthResponse {
+  token: string;
+  email: string;
+}
+
+export function registerAccount(email: string, password: string) {
+  return request<AuthResponse>("/api/auth/register", { method: "POST", body: JSON.stringify({ email, password }) });
+}
+
+export function loginAccount(email: string, password: string) {
+  return request<AuthResponse>("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+}
+
+export function fetchMe(userToken: string) {
+  return request<{ email: string }>("/api/auth/me", { headers: authHeaders(userToken) });
+}
+
+export interface RemoteProgress {
+  completedModules: Record<string, boolean>;
+  quizResults: Record<string, { score: number; total: number; at: string }>;
+  decisionScores: number[];
+}
+
+export function fetchProgress(userToken: string) {
+  return request<RemoteProgress>("/api/progress", { headers: authHeaders(userToken) });
+}
+
+export function saveProgress(data: RemoteProgress, userToken: string) {
+  return request<{ ok: true }>("/api/progress", { method: "PUT", headers: authHeaders(userToken), body: JSON.stringify(data) });
+}

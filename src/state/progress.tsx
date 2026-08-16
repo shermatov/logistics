@@ -1,4 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useAuth } from "./auth";
+import { fetchProgress, saveProgress } from "../lib/api";
 
 interface QuizResult {
   score: number;
@@ -12,6 +14,8 @@ interface ProgressState {
   decisionScores: number[]; // manager-mode / case decision self-assessed scores 0-100
 }
 
+export type SyncStatus = "local-only" | "loading" | "synced" | "error";
+
 interface ProgressApi extends ProgressState {
   markCompleted: (moduleId: string) => void;
   recordQuiz: (moduleId: string, score: number, total: number) => void;
@@ -19,27 +23,81 @@ interface ProgressApi extends ProgressState {
   completionPct: (totalModules: number) => number;
   averageQuizPct: () => number;
   reset: () => void;
+  syncStatus: SyncStatus;
 }
 
 const STORAGE_KEY = "logistics-school-progress-v1";
+const EMPTY_PROGRESS: ProgressState = { completedModules: {}, quizResults: {}, decisionScores: [] };
 const ProgressContext = createContext<ProgressApi | null>(null);
 
-function load(): ProgressState {
+function loadLocal(): ProgressState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {
     /* ignore corrupt storage */
   }
-  return { completedModules: {}, quizResults: {}, decisionScores: [] };
+  return { ...EMPTY_PROGRESS };
 }
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<ProgressState>(load);
+  const { token } = useAuth();
+  const [state, setState] = useState<ProgressState>(loadLocal);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("local-only");
+  const remoteLoadedRef = useRef(false);
+  const prevTokenRef = useRef<string | null>(null);
 
+  // Anonymous (logged-out) persistence — only source of truth when not authenticated.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    if (!token) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+  }, [state, token]);
+
+  // On login (or reload while already logged in), the server is authoritative:
+  // fetch it and replace local state before any push is allowed to fire, so a
+  // stale/anonymous state never overwrites real synced progress.
+  useEffect(() => {
+    if (!token) {
+      if (prevTokenRef.current) {
+        // just logged out — fall back to whatever's anonymous-local
+        setState(loadLocal());
+      }
+      prevTokenRef.current = null;
+      remoteLoadedRef.current = false;
+      setSyncStatus("local-only");
+      return;
+    }
+    prevTokenRef.current = token;
+    let cancelled = false;
+    remoteLoadedRef.current = false;
+    setSyncStatus("loading");
+    fetchProgress(token)
+      .then((remote) => {
+        if (cancelled) return;
+        setState(remote);
+        remoteLoadedRef.current = true;
+        setSyncStatus("synced");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Couldn't reach the server — keep local state, but still allow pushes
+        // so it self-heals once connectivity returns.
+        remoteLoadedRef.current = true;
+        setSyncStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  // Push every change to the server once the initial remote load has landed.
+  useEffect(() => {
+    if (!token || !remoteLoadedRef.current) return;
+    saveProgress(state, token)
+      .then(() => setSyncStatus("synced"))
+      .catch(() => setSyncStatus("error"));
+  }, [state, token]);
 
   const markCompleted = useCallback((moduleId: string) => {
     setState((s) => ({ ...s, completedModules: { ...s.completedModules, [moduleId]: true } }));
@@ -68,11 +126,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     return sum / results.length;
   }, [state.quizResults]);
 
-  const reset = useCallback(() => setState({ completedModules: {}, quizResults: {}, decisionScores: [] }), []);
+  const reset = useCallback(() => setState({ ...EMPTY_PROGRESS }), []);
 
   const value = useMemo<ProgressApi>(
-    () => ({ ...state, markCompleted, recordQuiz, recordDecision, completionPct, averageQuizPct, reset }),
-    [state, markCompleted, recordQuiz, recordDecision, completionPct, averageQuizPct, reset]
+    () => ({ ...state, markCompleted, recordQuiz, recordDecision, completionPct, averageQuizPct, reset, syncStatus }),
+    [state, markCompleted, recordQuiz, recordDecision, completionPct, averageQuizPct, reset, syncStatus]
   );
 
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;
